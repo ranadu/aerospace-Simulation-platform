@@ -1,11 +1,26 @@
+// src/App.jsx
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import Plot from 'react-plotly.js';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
+import './App.css';
 
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
+
+function OrientationBox({ phi, theta, psi }) {
+  return (
+    <mesh rotation={[theta, psi, phi]}>
+      <boxGeometry args={[2, 0.5, 3]} />
+      <meshStandardMaterial color="orange" />
+    </mesh>
+  );
+}
 
 function App() {
   const [altitudeData, setAltitudeData] = useState([]);
+  const [pitchData, setPitchData] = useState([]);
+  const [velData, setVelData] = useState([]);
   const [timeData, setTimeData] = useState([]);
   const [telemetry, setTelemetry] = useState({});
   const [t, setT] = useState(0);
@@ -14,6 +29,8 @@ function App() {
   const initSim = async () => {
     await axios.post(`${API_BASE}/init`);
     setAltitudeData([]);
+    setPitchData([]);
+    setVelData([]);
     setTimeData([]);
     setT(0);
     setTelemetry({});
@@ -21,10 +38,12 @@ function App() {
 
   const stepSim = async () => {
     const res = await axios.get(`${API_BASE}/step`);
-    const newZ = res.data.state.z;
-    setAltitudeData((prev) => [...prev, -newZ]);
+    const s = res.data.state;
+    setAltitudeData((prev) => [...prev, -s.z]);
+    setPitchData((prev) => [...prev, s.theta]);
+    setVelData((prev) => [...prev, s.u]);
     setTimeData((prev) => [...prev, t]);
-    setTelemetry(res.data.state);
+    setTelemetry(s);
     setT((prev) => prev + 0.01);
   };
 
@@ -44,34 +63,44 @@ function App() {
   }, []);
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
-      <h1>6-DOF Flight Simulator</h1>
+    <div className="container">
+      <h1>🛩️ 6-DOF Flight Simulator</h1>
 
-      <div style={{ marginBottom: '10px' }}>
+      <div className="controls">
         <button onClick={initSim}>INIT</button>
         <button onClick={stepSim}>STEP</button>
         <button onClick={startAuto}>AUTO RUN</button>
         <button onClick={stopAuto}>STOP</button>
       </div>
 
-      <Plot
-        data={[
-          {
-            x: timeData,
-            y: altitudeData,
-            type: 'scatter',
-            mode: 'lines+markers',
-            marker: { color: 'blue' },
-          },
-        ]}
-        layout={{ width: 700, height: 400, title: 'Altitude vs Time (m)' }}
-      />
+      <div className="charts">
+        <Plot
+          data={[{ x: timeData, y: altitudeData, type: 'scatter', mode: 'lines', name: 'Altitude' }]}
+          layout={{ title: 'Altitude vs Time (m)', height: 300 }}
+        />
+        <Plot
+          data={[{ x: timeData, y: pitchData, type: 'scatter', mode: 'lines', name: 'Pitch Angle' }]}
+          layout={{ title: 'Pitch Angle vs Time (rad)', height: 300 }}
+        />
+        <Plot
+          data={[{ x: timeData, y: velData, type: 'scatter', mode: 'lines', name: 'Forward Velocity' }]}
+          layout={{ title: 'Velocity (u) vs Time (m/s)', height: 300 }}
+        />
+      </div>
 
-      <div style={{ marginTop: '20px' }}>
+      <div className="orientation">
+        <h2>3D Orientation</h2>
+        <Canvas style={{ height: '300px', background: '#222' }}>
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[5, 5, 5]} />
+          <OrbitControls enablePan={false} />
+          <OrientationBox phi={telemetry.phi || 0} theta={telemetry.theta || 0} psi={telemetry.psi || 0} />
+        </Canvas>
+      </div>
+
+      <div className="telemetry">
         <h2>Telemetry</h2>
-        <pre style={{ background: '#eee', padding: '10px' }}>
-          {JSON.stringify(telemetry, null, 2)}
-        </pre>
+        <pre>{JSON.stringify(telemetry, null, 2)}</pre>
       </div>
     </div>
   );
