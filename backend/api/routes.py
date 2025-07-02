@@ -17,3 +17,14 @@ def step_sim():
 @router.get("/telemetry")
 def get_state():
     return {"state": sim.state}
+
+@router.post("/control")
+def control_input(theta: float, psi: float, u: float):
+    """
+    Accepts manual control input and updates the aircraft state.
+    This overrides the current simulation step.
+    """
+    sim.state.theta = theta
+    sim.state.psi = psi
+    sim.state.u = u
+    return {"status": "manual input applied", "state": sim.state.model_dump()}

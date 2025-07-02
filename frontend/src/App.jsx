@@ -46,6 +46,16 @@ function App() {
     setT((prev) => prev + 0.01);
   };
 
+  const sendControlInput = async (theta, psi, u) => {
+    try {
+      await axios.post(`${API_BASE}/control`, null, {
+        params: { theta, psi, u },
+      });
+    } catch (err) {
+      console.error("Failed to send control input", err);
+    }
+  };
+
   const startAuto = () => {
     if (!intervalRef.current) {
       intervalRef.current = setInterval(stepSim, 50);
@@ -137,6 +147,75 @@ function App() {
             psi={telemetry.psi || 0}
           />
         </Canvas>
+      </div>
+
+      <div className="hud">
+        <h2>Attitude Indicator (HUD)</h2>
+        <div className="hud-box">
+          <div
+            className="horizon"
+            style={{
+              transform: `rotate(${telemetry.phi || 0}rad) translateY(${-(telemetry.theta || 0) * 50}px)`
+            }}
+          />
+          <div className="center-line" />
+        </div>
+      </div>
+
+      <div className="controls-section">
+        <h2>Manual Controls</h2>
+        <div className="manual-controls">
+          <label>
+            Elevator (θ)
+            <input
+              type="range"
+              min="-0.5"
+              max="0.5"
+              step="0.01"
+              value={telemetry.theta || 0}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                const updated = { ...telemetry, theta: val };
+                setTelemetry(updated);
+                sendControlInput(updated.theta, updated.psi || 0, updated.u || 0);
+              }}
+            />
+          </label>
+
+          <label>
+            Rudder (ψ)
+            <input
+              type="range"
+              min="-1"
+              max="1"
+              step="0.01"
+              value={telemetry.psi || 0}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                const updated = { ...telemetry, psi: val };
+                setTelemetry(updated);
+                sendControlInput(updated.theta || 0, updated.psi, updated.u || 0);
+              }}
+            />
+          </label>
+
+          <label>
+            Throttle (u)
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={telemetry.u || 0}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                const updated = { ...telemetry, u: val };
+                setTelemetry(updated);
+                sendControlInput(updated.theta || 0, updated.psi || 0, updated.u);
+              }}
+            />
+          </label>
+        </div>
       </div>
 
       <div className="telemetry">
