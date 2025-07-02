@@ -1,4 +1,3 @@
-// src/App.jsx
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import Plot from 'react-plotly.js';
@@ -75,16 +74,54 @@ function App() {
 
       <div className="charts">
         <Plot
-          data={[{ x: timeData, y: altitudeData, type: 'scatter', mode: 'lines', name: 'Altitude' }]}
-          layout={{ title: 'Altitude vs Time (m)', height: 300 }}
+          data={[{
+            x: timeData,
+            y: altitudeData,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Altitude',
+            line: { color: 'blue' }
+          }]}
+          layout={{
+            title: { text: 'Altitude vs Time', font: { size: 20 } },
+            height: 300,
+            xaxis: { title: { text: 'Time (s)', font: { size: 16 } } },
+            yaxis: { title: { text: 'Altitude (m)', font: { size: 16 } } },
+          }}
         />
+
         <Plot
-          data={[{ x: timeData, y: pitchData, type: 'scatter', mode: 'lines', name: 'Pitch Angle' }]}
-          layout={{ title: 'Pitch Angle vs Time (rad)', height: 300 }}
+          data={[{
+            x: timeData,
+            y: pitchData,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Pitch',
+            line: { color: 'orange' }
+          }]}
+          layout={{
+            title: { text: 'Pitch Angle vs Time', font: { size: 20 } },
+            height: 300,
+            xaxis: { title: { text: 'Time (s)', font: { size: 16 } } },
+            yaxis: { title: { text: 'θ (rad)', font: { size: 16 } } },
+          }}
         />
+
         <Plot
-          data={[{ x: timeData, y: velData, type: 'scatter', mode: 'lines', name: 'Forward Velocity' }]}
-          layout={{ title: 'Velocity (u) vs Time (m/s)', height: 300 }}
+          data={[{
+            x: timeData,
+            y: velData,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Velocity',
+            line: { color: 'green' }
+          }]}
+          layout={{
+            title: { text: 'Velocity vs Time', font: { size: 20 } },
+            height: 300,
+            xaxis: { title: { text: 'Time (s)', font: { size: 16 } } },
+            yaxis: { title: { text: 'u (m/s)', font: { size: 16 } } },
+          }}
         />
       </div>
 
@@ -94,7 +131,11 @@ function App() {
           <ambientLight intensity={0.5} />
           <directionalLight position={[5, 5, 5]} />
           <OrbitControls enablePan={false} />
-          <OrientationBox phi={telemetry.phi || 0} theta={telemetry.theta || 0} psi={telemetry.psi || 0} />
+          <OrientationBox
+            phi={telemetry.phi || 0}
+            theta={telemetry.theta || 0}
+            psi={telemetry.psi || 0}
+          />
         </Canvas>
       </div>
 
